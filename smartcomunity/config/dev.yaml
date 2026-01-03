@@ -1,0 +1,19 @@
+server:
+  port: "8080" # 开发环境运行在 8080
+
+db:
+  # 注意：如果是本地运行 go run main.go，用 localhost
+  # 如果是 Docker 运行，这里可能需要改成 service name 或者宿主机 IP
+  dsn: "root:root@tcp(localhost:13306)/smart_community?charset=utf8mb4&parseTime=True&loc=Local"
+
+redis:
+  addr: "localhost:6379"
+
+
+# --- 新增 MinIO 配置 ---
+minio:
+  endpoint: "43.138.85.114:9000"    # MinIO 服务地址 (不带 http://)
+  access_key: "minioadmin"           # 你的 MinIO 账号
+  secret_key: "minioadmin123"        # 你的 MinIO 密码
+  bucket: "community"           # 存储桶名称
+  use_ssl: false                # 本地通常是 false，线上如果是 https 则为 true

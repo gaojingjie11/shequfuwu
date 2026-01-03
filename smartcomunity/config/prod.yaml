@@ -1,0 +1,17 @@
+server:
+  port: "8082" # 生产环境容器内运行在 8082
+
+db:
+  # Host网络模式下，127.0.0.1 就是宿主机
+  dsn: "root:123456@tcp(43.138.85.114:3306)/smart_community?charset=utf8mb4&parseTime=True&loc=Local"
+
+redis:
+  # Host网络模式下，127.0.0.1 就是宿主机
+  addr: "43.138.85.114:6359"
+
+minio:
+  endpoint: "43.138.85.114:9000"           # MinIO 必须保持公网IP供前端访问
+  access_key: "minioadmin"
+  secret_key: "minioadmin123"
+  bucket: "community"
+  use_ssl: false
