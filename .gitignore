@@ -1,0 +1,17 @@
+mysql_data/
+.idea/
+database
+
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+frontend/.npmrc
+docker-compose.yml
+
+# 后端
+*.exe
+*.dll
+bin/
+vendor/
+.idea/
+
