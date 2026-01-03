@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  # 后端服务
+  backend:
+    build:
+      context: ./smartcomunity
+      dockerfile: Dockerfile
+    container_name: smartserver
+    restart: always
+    environment:
+      - APP_ENV=prod
+    # 使用 Host 模式，这样容器可以直接访问宿主机的 MySQL/Redis (127.0.0.1)
+    # 同时也直接暴露 8082 端口
+    network_mode: "host"
+
+  # 前端服务
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: smartfrontend
+    restart: always
+    # 使用 Host 模式，直接监听宿主机的 81 端口 (我们在 frontend/nginx.conf 里改成了 listen 81)
+    network_mode: "host"
