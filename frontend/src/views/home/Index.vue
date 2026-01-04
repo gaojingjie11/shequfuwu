@@ -87,6 +87,42 @@ onMounted(async () => {
   color: white;
   padding: 80px 0;
   margin-bottom: var(--spacing-xl);
+  position: relative;
+  overflow: hidden;
+}
+
+/* 动态波浪效果 */
+.banner::after {
+  content: "";
+  position: absolute;
+  bottom: -50px;
+  left: 0;
+  width: 200%;
+  height: 200px;
+  background-repeat: repeat-x;
+  background-size: 50% 100%;
+  background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 1200 200' xmlns='http://www.w3.org/2000/svg'><path d='M0,60 C300,120 600,0 1200,60 L1200,200 L0,200 Z' fill='rgba(255,255,255,0.2)'/></svg>");
+  animation: waveMove 10s linear infinite;
+  opacity: 0.6;
+}
+
+.banner::before {
+  content: "";
+  position: absolute;
+  bottom: -40px;
+  left: 0;
+  width: 200%;
+  height: 200px;
+  background-repeat: repeat-x;
+  background-size: 50% 100%;
+  background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 1200 200' xmlns='http://www.w3.org/2000/svg'><path d='M0,60 C300,120 600,0 1200,60 L1200,200 L0,200 Z' fill='rgba(255,255,255,0.3)'/></svg>");
+  animation: waveMove 15s linear infinite reverse;
+  opacity: 0.4;
+}
+
+@keyframes waveMove {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
 }
 
 .banner-title {

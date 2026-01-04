@@ -70,7 +70,7 @@ func InitRouter(r *gin.Engine) {
 
 		// 报事报修
 		private.POST("/repair/create", repairHandler.Create) // 提交
-		private.GET("/repair/list", repairHandler.List)      // 查看历史// 之后可以在这里加: 订单下单、物业报修...
+		private.GET("/repair/list", repairHandler.List)      // 查看历史..
 
 		// --- 支付中心 ---
 		private.POST("/finance/pay", financeHandler.Pay)                      // 统一支付
@@ -115,7 +115,6 @@ func InitRouter(r *gin.Engine) {
 		private.GET("/repair/admin/list", repairHandler.ListAll) // 查看所有
 		private.POST("/repair/process", repairHandler.Process)   // 处理/反馈
 
-		// --- 收藏夹 ---
 		// --- 收藏夹 ---
 		private.POST("/favorite/add", favoriteHandler.Add)       // 收藏
 		private.POST("/favorite/delete", favoriteHandler.Delete) // 取消

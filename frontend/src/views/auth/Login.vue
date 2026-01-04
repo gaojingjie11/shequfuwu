@@ -22,8 +22,8 @@
           <div class="form-footer">
             <router-link to="/register" class="link">还没有账号？注册</router-link>
           </div>
-          <button type="submit" class="btn btn-primary btn-lg" :disabled="loading">
-            <span v-if="!loading">登录</span>
+          <button type="submit" class="btn btn-primary btn-lg" :disabled="loading || isThrottled">
+            <span v-if="!loading">{{ isThrottled ? '请稍候...' : '登录' }}</span>
             <span v-else class="loading"></span>
           </button>
         </form>
@@ -45,8 +45,8 @@
           <div class="form-footer">
             <router-link to="/register" class="link">还没有账号？注册</router-link>
           </div>
-          <button type="submit" class="btn btn-primary btn-lg" :disabled="loading">
-            <span v-if="!loading">登录</span>
+          <button type="submit" class="btn btn-primary btn-lg" :disabled="loading || isThrottled">
+            <span v-if="!loading">{{ isThrottled ? '请稍候...' : '登录' }}</span>
             <span v-else class="loading"></span>
           </button>
         </form>
@@ -69,12 +69,25 @@ const userStore = useUserStore()
 const loginType = ref('password') // password | code
 const loading = ref(false)
 const timer = ref(0)
+const isThrottled = ref(false)
 
 const form = ref({ mobile: '', password: '' })
 const codeForm = ref({ mobile: '', code: '' })
 
 // 密码登录
 const handleLogin = async () => {
+  if (isThrottled.value) return
+  
+  // 简单的手机号格式校验
+  if (!/^1[3-9]\d{9}$/.test(form.value.mobile)) {
+     ElMessage.warning('请输入正确的11位手机号')
+     return
+  }
+
+  isThrottled.value = true
+  // 3秒后释放
+  setTimeout(() => isThrottled.value = false, 3000)
+
   loading.value = true
   try {
     await userStore.login(form.value)
@@ -93,6 +106,10 @@ const sendSms = async () => {
         ElMessage.warning('请输入手机号')
         return
     }
+    if (!/^1[3-9]\d{9}$/.test(codeForm.value.mobile)) {
+        ElMessage.warning('请输入正确的11位手机号')
+        return
+    }
     try {
         await sendCode({ mobile: codeForm.value.mobile })
         ElMessage.success('验证码已发送')
@@ -108,6 +125,16 @@ const sendSms = async () => {
 
 // 验证码登录
 const handleCodeLogin = async () => {
+    if (isThrottled.value) return
+    
+    if (!/^1[3-9]\d{9}$/.test(codeForm.value.mobile)) {
+        ElMessage.warning('请输入正确的11位手机号')
+        return
+    }
+
+    isThrottled.value = true
+    setTimeout(() => isThrottled.value = false, 3000)
+
     loading.value = true
     try {
         await userStore.loginByCode(codeForm.value)
