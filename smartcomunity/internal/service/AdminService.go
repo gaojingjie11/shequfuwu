@@ -178,7 +178,7 @@ func (s *AdminService) GetDashboardStats() (*DashboardStats, error) {
 	} else {
 		stats.ParkingRate = "0%"
 	}
-	parkingIncome := float64(occupiedParking) * 300 // 估算值
+	parkingIncome := float64(occupiedParking) * 30 // 估算值
 
 	// 5. 报修占比
 	var repairs []struct {
