@@ -15,7 +15,7 @@
             <h2>{{ userInfo.real_name || userInfo.username }}</h2>
             <p>{{ userInfo.mobile }}</p>
             <el-tag size="small" effect="plain" style="margin-top: 5px">
-                 {{ userInfo.role === 'admin' ? '系统管理员' : (userInfo.role === 'store' ? '商户' : '居民') }}
+                 {{ {'admin': '系统管理员', 'store': '商户', 'property': '物业'}[userInfo.role] || '居民' }}
             </el-tag>
           </div>
           <div class="header-actions">
