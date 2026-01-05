@@ -205,6 +205,14 @@ export const assignParking = (data) => {
     })
 }
 
+export const createParking = (data) => {
+    return request({
+        url: '/parking/admin/create',
+        method: 'post',
+        data
+    })
+}
+
 // Property Fee Management
 export const createPropertyFee = (data) => {
     return request({

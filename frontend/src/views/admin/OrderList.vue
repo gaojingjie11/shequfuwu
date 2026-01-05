@@ -4,6 +4,20 @@
     <div class="container">
       <div class="page-header">
         <h1 class="page-title">订单管理</h1>
+        <div class="actions" style="display:flex; gap:10px;">
+             <el-input 
+                v-model="searchUserId" 
+                placeholder="按用户ID搜索" 
+                style="width: 200px" 
+                clearable 
+                @clear="handleSearch"
+                @keyup.enter="handleSearch"
+             >
+                <template #append>
+                    <el-button @click="handleSearch">搜索</el-button>
+                </template>
+             </el-input>
+        </div>
       </div>
 
       <div class="table-container card">
@@ -86,6 +100,7 @@ const loadingData = ref(false)
 const total = ref(0)
 const page = ref(1)
 const size = ref(10)
+const searchUserId = ref('')
 
 const formatDate = (date) => dayjs(date).format('YYYY-MM-DD HH:mm')
 
@@ -106,7 +121,11 @@ const getStatusType = (status) => {
 const fetchOrders = async () => {
   loadingData.value = true
   try {
-    const res = await getAdminOrderList({ page: page.value, size: size.value })
+    const params = { page: page.value, size: size.value }
+    if (searchUserId.value) {
+        params.user_id = searchUserId.value
+    }
+    const res = await getAdminOrderList(params)
     // With simplified handler returning list, pagination might be missing if I didn't update API file
     // Handlers returns { list: [], total: N } now
     if (res.list) {
@@ -139,6 +158,11 @@ const handleShip = async (order) => {
   }
 }
 
+const handleSearch = () => {
+    page.value = 1
+    fetchOrders()
+}
+ 
 onMounted(() => {
   fetchOrders()
 })

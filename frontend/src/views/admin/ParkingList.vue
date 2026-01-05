@@ -5,7 +5,7 @@
       <div class="page-header">
         <h1 class="page-title">车位管理</h1>
         <div class="actions">
-          <!-- <el-button type="primary">新增车位</el-button> -->
+          <el-button type="primary" @click="openCreateModal">新增车位</el-button>
         </div>
       </div>
 
@@ -103,6 +103,21 @@
         </template>
       </el-dialog>
 
+      <!-- Create Modal -->
+      <el-dialog v-model="showCreateModal" title="新增车位" width="400px">
+        <el-form :model="createForm" label-width="80px">
+          <el-form-item label="车位号">
+            <el-input v-model="createForm.parking_no" placeholder="例如: A-001" />
+          </el-form-item>
+        </el-form>
+        <template #footer>
+          <span class="dialog-footer">
+            <el-button @click="showCreateModal = false">取消</el-button>
+            <el-button type="primary" @click="saveCreate" :loading="creating">保存</el-button>
+          </span>
+        </template>
+      </el-dialog>
+
     </div>
   </div>
 </template>
@@ -110,7 +125,7 @@
 <script setup>
 import { ref, onMounted, reactive } from 'vue'
 import Navbar from '@/components/layout/Navbar.vue'
-import { getAdminParkingList, getParkingStats, assignParking } from '@/api/admin'
+import { getAdminParkingList, getParkingStats, assignParking, createParking } from '@/api/admin'
 import { ElMessage } from 'element-plus'
 
 const list = ref([])
@@ -169,6 +184,34 @@ const saveAssign = async () => {
   } finally {
     loading.value = false
   }
+}
+
+// Create Logic
+const showCreateModal = ref(false)
+const createForm = reactive({ parking_no: '' })
+const creating = ref(false)
+
+const openCreateModal = () => {
+    createForm.parking_no = ''
+    showCreateModal.value = true
+}
+
+const saveCreate = async () => {
+    if (!createForm.parking_no) {
+        ElMessage.warning('请输入车位号')
+        return
+    }
+    creating.value = true
+    try {
+        await createParking({ parking_no: createForm.parking_no })
+        ElMessage.success('创建成功')
+        showCreateModal.value = false
+        fetchData()
+    } catch (e) {
+        ElMessage.error(e.response?.data?.msg || '创建失败')
+    } finally {
+        creating.value = false
+    }
 }
 
 onMounted(() => {

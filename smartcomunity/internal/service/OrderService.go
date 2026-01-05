@@ -219,11 +219,14 @@ func (s *OrderService) ReceiveOrder(userID, orderID int64) error {
 }
 
 // ListAllOrders 管理员查看所有订单 (Admin)
-func (s *OrderService) ListAllOrders(page, size int) ([]model.Order, int64, error) {
+func (s *OrderService) ListAllOrders(page, size int, userID int64) ([]model.Order, int64, error) {
 	var list []model.Order
 	var total int64
 
 	tx := global.DB.Model(&model.Order{})
+	if userID > 0 {
+		tx = tx.Where("user_id = ?", userID)
+	}
 	tx.Count(&total)
 
 	// Preload 加载关联的商品信息，方便管理端查看

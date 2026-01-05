@@ -130,6 +130,7 @@ func InitRouter(r *gin.Engine) {
 		private.GET("/parking/admin/list", securityHandler.GetAllParking)
 		private.GET("/parking/admin/stats", securityHandler.GetParkingStats)
 		private.POST("/parking/admin/assign", securityHandler.AssignParking)
+		private.POST("/parking/admin/create", securityHandler.CreateParking) // 新增车位
 
 		// --- 物业费管理 (Admin) 新增 ---
 		private.POST("/property/admin/create", financeHandler.CreatePropertyFee)

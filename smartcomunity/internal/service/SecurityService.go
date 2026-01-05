@@ -141,3 +141,20 @@ func (s *SecurityService) AssignParking(id int64, userID int64, carPlate string)
 		"status":    1,
 	}).Error
 }
+
+// CreateParking 创建新车位
+func (s *SecurityService) CreateParking(parkingNo string) error {
+	// 1. 检查是否已存在
+	var count int64
+	global.DB.Model(&model.Parking{}).Where("parking_no = ?", parkingNo).Count(&count)
+	if count > 0 {
+		return errors.New("车位号已存在")
+	}
+
+	// 2. 创建
+	parking := model.Parking{
+		ParkingNo: parkingNo,
+		Status:    0, // 空闲
+	}
+	return global.DB.Create(&parking).Error
+}

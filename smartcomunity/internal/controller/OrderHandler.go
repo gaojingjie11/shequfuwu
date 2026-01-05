@@ -1,11 +1,12 @@
 package controller
 
 import (
-	"github.com/gin-gonic/gin"
 	"smartcommunity/internal/model"
 	"smartcommunity/internal/service"
 	"smartcommunity/pkg/response"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
 )
 
 type OrderHandler struct {
@@ -167,8 +168,10 @@ func (h *OrderHandler) Cancel(c *gin.Context) {
 func (h *OrderHandler) ListAll(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	size, _ := strconv.Atoi(c.DefaultQuery("size", "10"))
+	// 新增 user_id 搜索
+	userID, _ := strconv.ParseInt(c.Query("user_id"), 10, 64)
 
-	list, total, err := h.Service.ListAllOrders(page, size)
+	list, total, err := h.Service.ListAllOrders(page, size, userID)
 	if err != nil {
 		response.Fail(c, "获取失败")
 		return

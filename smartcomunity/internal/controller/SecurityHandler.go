@@ -179,3 +179,25 @@ func (h *SecurityHandler) ListAllVisitor(c *gin.Context) {
 		"total": total,
 	})
 }
+
+// CreateParking 创建车位 (Admin)
+func (h *SecurityHandler) CreateParking(c *gin.Context) {
+	var req struct {
+		ParkingNo string `json:"parking_no"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, "参数错误")
+		return
+	}
+
+	if req.ParkingNo == "" {
+		response.Fail(c, "车位号不能为空")
+		return
+	}
+
+	if err := h.Service.CreateParking(req.ParkingNo); err != nil {
+		response.Fail(c, "创建失败: "+err.Error())
+		return
+	}
+	response.Success(c, nil)
+}
