@@ -47,6 +47,10 @@ func InitRouter(r *gin.Engine) {
 
 		// --- 【新增】数据大屏 ---
 		apiGroup.GET("/dashboard/stats", adminHandler.GetDashboardStats)
+
+		// --- 【新增】商品评论 ---
+		commentHandler := controller.CommentHandler{}
+		apiGroup.GET("/comments", commentHandler.List) // 公开查看评论
 	}
 
 	// 2. 私有接口 (Private - 需要登录)
@@ -149,6 +153,9 @@ func InitRouter(r *gin.Engine) {
 		private.POST("/admin/user/assign_role", adminHandler.AssignRole)
 		private.POST("/admin/user/update_balance", adminHandler.UpdateUserBalance)
 
+		// --- 【新增】商品评论 (Auth) ---
+		commentHandler := controller.CommentHandler{}
+		private.POST("/comment/create", commentHandler.Create)
 	}
 
 	public := r.Group("/api/v1")

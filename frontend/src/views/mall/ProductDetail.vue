@@ -41,6 +41,55 @@
             </button>
           </div>
         </div>
+        </div>
+      </div>
+
+      <!-- Comment Section -->
+      <div class="comments-section card">
+          <h2 class="section-title">商品评价</h2>
+          
+          <!-- Post Comment Form -->
+          <div class="comment-form">
+               <el-input 
+                  v-model="commentContent" 
+                  type="textarea" 
+                  :rows="3" 
+                  placeholder="写下你的评价..." 
+               />
+               <div class="form-footer">
+                   <el-rate v-model="commentRating" />
+                   <el-button type="primary" @click="submitComment">发表评论</el-button>
+               </div>
+          </div>
+
+          <!-- Comment List -->
+          <div class="comment-list">
+              <div v-for="item in comments" :key="item.id" class="comment-item">
+                  <div class="comment-avatar">
+                      <img :src="item.user?.avatar || 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'" />
+                  </div>
+                  <div class="comment-body">
+                      <div class="comment-header">
+                          <span class="username">{{ item.user?.real_name || item.user?.username || '匿名用户' }}</span>
+                          <el-rate :model-value="item.rating" disabled size="small" />
+                          <span class="time">{{ formatDate(item.created_at) }}</span>
+                      </div>
+                      <div class="comment-content">{{ item.content }}</div>
+                  </div>
+              </div>
+              <el-empty v-if="comments.length === 0" description="暂无评价" />
+          </div>
+
+          <!-- Pagination -->
+          <div class="pagination-container" v-if="total > 0">
+               <el-pagination
+                 v-model:current-page="page"
+                 v-model:page-size="size"
+                 :total="total"
+                 layout="prev, pager, next"
+                 @current-change="fetchComments"
+               />
+          </div>
       </div>
     </div>
   </div>
@@ -116,6 +165,7 @@ onMounted(async () => {
   try {
     product.value = await getProductDetail(route.params.id)
     checkFavStatus()
+    fetchComments()
   } catch (error) {
     console.error('获取商品详情失败:', error)
   }
@@ -202,5 +252,67 @@ onMounted(async () => {
   .product-detail {
     grid-template-columns: 1fr;
   }
+}
+
+/* Comment Styles */
+.comments-section {
+    margin-top: 20px;
+    padding: 20px;
+}
+.section-title {
+    font-size: 20px;
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+.comment-form {
+    margin-bottom: 30px;
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+}
+.form-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+}
+.comment-item {
+    display: flex;
+    gap: 15px;
+    padding: 20px 0;
+    border-bottom: 1px solid #eee;
+}
+.comment-avatar img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+.comment-body {
+    flex: 1;
+}
+.comment-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 5px;
+}
+.username {
+    font-weight: 600;
+    font-size: 14px;
+}
+.time {
+    margin-left: auto;
+    color: #999;
+    font-size: 12px;
+}
+.comment-content {
+    color: #333;
+    line-height: 1.6;
+}
+.pagination-container {
+    margin-top: 20px;
+    display: flex;
+    justify-content: flex-end;
 }
 </style>

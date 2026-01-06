@@ -45,7 +45,7 @@ func (s *UserService) Register(user *model.SysUser) error {
 	return global.DB.Create(user).Error
 }
 
-// Login 用户登录逻辑 [cite: 39]
+// Login 用户登录逻辑
 func (s *UserService) Login(mobile, password, ip, userAgent string) (string, *model.SysUser, error) {
 	var user model.SysUser
 	// 1. 根据手机号查询用户
@@ -76,7 +76,7 @@ func (s *UserService) Login(mobile, password, ip, userAgent string) (string, *mo
 	}
 
 	// --- [新增 Redis 逻辑] ---
-	// Key 格式建议: "login:token:{userId}"
+	// Key 格式: "login:token:{userId}"
 	// Value: token 字符串
 	// 过期时间: 与 JWT 过期时间保持一致 (24小时)
 	redisKey := fmt.Sprintf("login:token:%d", user.ID)
