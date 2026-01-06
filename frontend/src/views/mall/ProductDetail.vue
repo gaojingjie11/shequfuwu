@@ -41,7 +41,6 @@
             </button>
           </div>
         </div>
-        </div>
       </div>
 
       <!-- Comment Section -->
@@ -92,7 +91,9 @@
           </div>
       </div>
     </div>
+
   </div>
+
 </template>
 
 <script setup>
