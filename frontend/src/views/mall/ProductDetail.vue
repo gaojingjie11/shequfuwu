@@ -162,6 +162,56 @@ const checkFavStatus = async () => {
     }
 }
 
+// --- Comment Logic ---
+import { getCommentList, createComment } from '@/api/comment'
+import dayjs from 'dayjs'
+
+const comments = ref([])
+const total = ref(0)
+const page = ref(1)
+const size = ref(10)
+const commentContent = ref('')
+const commentRating = ref(5)
+
+const fetchComments = async () => {
+    try {
+        const res = await getCommentList({ 
+            product_id: route.params.id,
+            page: page.value,
+            size: size.value 
+        })
+        comments.value = res.list || []
+        total.value = res.total
+    } catch (e) {
+        console.error(e)
+    }
+}
+
+const submitComment = async () => {
+    if (!commentContent.value.trim()) {
+        ElMessage.warning('请输入评价内容')
+        return
+    }
+    try {
+        await createComment({
+            product_id: Number(route.params.id),
+            content: commentContent.value,
+            rating: commentRating.value
+        })
+        ElMessage.success('评价成功')
+        commentContent.value = ''
+        fetchComments()
+    } catch (e) {
+         if (e.response?.status === 401) {
+            router.push('/login')
+         } else {
+             ElMessage.error(e.response?.data?.msg || '评价失败')
+         }
+    }
+}
+
+const formatDate = (date) => dayjs(date).format('YYYY-MM-DD HH:mm')
+
 onMounted(async () => {
   try {
     product.value = await getProductDetail(route.params.id)
