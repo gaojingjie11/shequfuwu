@@ -23,6 +23,7 @@
       <div class="table-container card">
         <el-table :data="orders" stripe border style="width: 100%" v-loading="loadingData">
           <el-table-column prop="order_no" label="订单号" width="180" />
+          <el-table-column prop="store.name" label="门店名称" width="150" />
           <el-table-column prop="user_id" label="用户ID" width="100" />
           <el-table-column prop="total_amount" label="总金额" width="120">
              <template #default="scope">¥{{ scope.row.total_amount }}</template>

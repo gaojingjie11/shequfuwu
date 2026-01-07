@@ -64,14 +64,14 @@ func InitRouter(r *gin.Engine) {
 		private.DELETE("/cart/:id", cartHandler.Delete) // 删除
 		private.POST("/cart/:id", cartHandler.Update)   // 修改数量
 		// 订单相关
-		private.POST("/order/create", orderHandler.Create)     // 下单
-		private.GET("/order/list", orderHandler.List)          // 订单列表
-		private.GET("/order/detail", orderHandler.Detail)      // 订单详情 (新增)
-		private.POST("/order/pay", orderHandler.Pay)           // 支付订单
-		private.GET("/order/admin/list", orderHandler.ListAll) // 管理员看所有订单
-		private.POST("/order/ship", orderHandler.Ship)         // 管理员发货
-		private.POST("/order/receive", orderHandler.Receive)   // 用户确认收货
-		private.POST("/order/cancel", orderHandler.Cancel)     // 用户取消
+		private.POST("/order/create", orderHandler.Create)                                               // 下单
+		private.GET("/order/list", orderHandler.List)                                                    // 订单列表
+		private.GET("/order/detail", orderHandler.Detail)                                                // 订单详情 (新增)
+		private.POST("/order/pay", orderHandler.Pay)                                                     // 支付订单
+		private.GET("/order/admin/list", middleware.RequireRole("admin", "store"), orderHandler.ListAll) // 管理员看所有订单
+		private.POST("/order/ship", middleware.RequireRole("admin", "store"), orderHandler.Ship)         // 管理员发货
+		private.POST("/order/receive", orderHandler.Receive)                                             // 用户确认收货
+		private.POST("/order/cancel", orderHandler.Cancel)                                               // 用户取消
 
 		// 报事报修
 		private.POST("/repair/create", repairHandler.Create) // 提交
@@ -89,36 +89,36 @@ func InitRouter(r *gin.Engine) {
 		private.DELETE("/marketing/promotion/:id", marketingHandler.Delete)
 
 		// --- 门店管理 ---
-		private.POST("/store/create", storeHandler.Create)
-		private.POST("/store/update", storeHandler.Update)
-		private.DELETE("/store/:id", storeHandler.Delete)
-		private.POST("/store/bind_product", storeHandler.BindProduct)
+		private.POST("/store/create", middleware.RequireRole("admin", "store"), storeHandler.Create)
+		private.POST("/store/update", middleware.RequireRole("admin", "store"), storeHandler.Update)
+		private.DELETE("/store/:id", middleware.RequireRole("admin", "store"), storeHandler.Delete)
+		private.POST("/store/bind_product", middleware.RequireRole("admin", "store"), storeHandler.BindProduct)
 
 		// --- 管理员接口 ---
-		private.POST("/product/create", productHandler.Create) // 发布商品
-		private.POST("/product/update", productHandler.Update) // 更新商品
-		private.DELETE("/product/:id", productHandler.Delete)  // 删除商品
-		private.GET("/product/rank", productHandler.GetRank)   // 销量排
+		private.POST("/product/create", middleware.RequireRole("admin", "store"), productHandler.Create) // 发布商品
+		private.POST("/product/update", middleware.RequireRole("admin", "store"), productHandler.Update) // 更新商品
+		private.DELETE("/product/:id", middleware.RequireRole("admin", "store"), productHandler.Delete)  // 删除商品
+		private.GET("/product/rank", productHandler.GetRank)                                             // 销量排
 
 		// --- 新增：安保管理 (访客 & 车位) ---
 		private.POST("/visitor/create", securityHandler.CreateVisitor) // 访客登记
 		private.GET("/visitor/list", securityHandler.ListVisitor)      // 访客记录
 		private.GET("/parking/my", securityHandler.MyParking)          // 我的车位
 		private.POST("/parking/bind", securityHandler.BindCar)
-		private.GET("/visitor/admin/list", securityHandler.ListAllVisitor) // 管理员看列表
-		private.POST("/visitor/audit", securityHandler.AuditVisitor)       // 审核通过/拒绝
+		private.GET("/visitor/admin/list", middleware.RequireRole("admin", "property"), securityHandler.ListAllVisitor) // 管理员看列表
+		private.POST("/visitor/audit", middleware.RequireRole("admin", "property"), securityHandler.AuditVisitor)       // 审核通过/拒绝
 
 		// --- 【新增】通用上传 ---
 		private.POST("/upload", uploadHandler.UploadFile)
 
 		// --- 【新增】管理员-公告管理 ---
-		private.POST("/notice/create", noticeHandler.Create) // 发布
-		private.DELETE("/notice/:id", noticeHandler.Delete)  // 删除
-		private.POST("/notice/read/:id", noticeHandler.Read) // 标记已读 (用户)
+		private.POST("/notice/create", middleware.RequireRole("admin", "property"), noticeHandler.Create) // 发布
+		private.DELETE("/notice/:id", middleware.RequireRole("admin", "property"), noticeHandler.Delete)  // 删除
+		private.POST("/notice/read/:id", noticeHandler.Read)                                              // 标记已读 (用户)
 
 		// --- 【新增】管理员-报修管理 ---
-		private.GET("/repair/admin/list", repairHandler.ListAll) // 查看所有
-		private.POST("/repair/process", repairHandler.Process)   // 处理/反馈
+		private.GET("/repair/admin/list", middleware.RequireRole("admin", "property"), repairHandler.ListAll) // 查看所有
+		private.POST("/repair/process", middleware.RequireRole("admin", "property"), repairHandler.Process)   // 处理/反馈
 
 		// --- 收藏夹 ---
 		private.POST("/favorite/add", favoriteHandler.Add)       // 收藏
@@ -132,27 +132,27 @@ func InitRouter(r *gin.Engine) {
 		private.GET("/user/info", userHandler.Info)                       // 获取最新信息
 
 		// --- 车位管理 (Admin) 新增 ---
-		private.GET("/parking/admin/list", securityHandler.GetAllParking)
-		private.GET("/parking/admin/stats", securityHandler.GetParkingStats)
-		private.POST("/parking/admin/assign", securityHandler.AssignParking)
-		private.POST("/parking/admin/create", securityHandler.CreateParking) // 新增车位
+		private.GET("/parking/admin/list", middleware.RequireRole("admin", "property"), securityHandler.GetAllParking)
+		private.GET("/parking/admin/stats", middleware.RequireRole("admin", "property"), securityHandler.GetParkingStats)
+		private.POST("/parking/admin/assign", middleware.RequireRole("admin", "property"), securityHandler.AssignParking)
+		private.POST("/parking/admin/create", middleware.RequireRole("admin", "property"), securityHandler.CreateParking) // 新增车位
 
 		// --- 物业费管理 (Admin) 新增 ---
-		private.POST("/property/admin/create", financeHandler.CreatePropertyFee)
-		private.GET("/property/admin/list", financeHandler.ListAllPropertyFees)
+		private.POST("/property/admin/create", middleware.RequireRole("admin", "property"), financeHandler.CreatePropertyFee)
+		private.GET("/property/admin/list", middleware.RequireRole("admin", "property"), financeHandler.ListAllPropertyFees)
 
 		// --- 系统管理 (RBAC & Logs) ---
-		private.POST("/admin/role/create", adminHandler.CreateRole)
-		private.GET("/admin/role/list", adminHandler.ListRoles)
-		private.POST("/admin/menu/create", adminHandler.CreateMenu)
-		private.GET("/admin/menu/list", adminHandler.ListMenus)
-		private.POST("/admin/role/bind_menu", adminHandler.BindRoleMenu)
+		private.POST("/admin/role/create", middleware.RequireRole("admin"), adminHandler.CreateRole)
+		private.GET("/admin/role/list", middleware.RequireRole("admin"), adminHandler.ListRoles)
+		private.POST("/admin/menu/create", middleware.RequireRole("admin"), adminHandler.CreateMenu)
+		private.GET("/admin/menu/list", middleware.RequireRole("admin"), adminHandler.ListMenus)
+		private.POST("/admin/role/bind_menu", middleware.RequireRole("admin"), adminHandler.BindRoleMenu)
 
-		private.GET("/admin/user/list", adminHandler.ListUsers)     // 用户列表
-		private.POST("/admin/user/freeze", adminHandler.FreezeUser) // 冻结用户
+		private.GET("/admin/user/list", middleware.RequireRole("admin"), adminHandler.ListUsers)     // 用户列表
+		private.POST("/admin/user/freeze", middleware.RequireRole("admin"), adminHandler.FreezeUser) // 冻结用户
 		// 新增用户管理接口
-		private.POST("/admin/user/assign_role", adminHandler.AssignRole)
-		private.POST("/admin/user/update_balance", adminHandler.UpdateUserBalance)
+		private.POST("/admin/user/assign_role", middleware.RequireRole("admin"), adminHandler.AssignRole)
+		private.POST("/admin/user/update_balance", middleware.RequireRole("admin"), adminHandler.UpdateUserBalance)
 
 		// --- 【新增】商品评论 (Auth) ---
 		commentHandler := controller.CommentHandler{}

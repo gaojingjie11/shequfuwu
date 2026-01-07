@@ -203,7 +203,7 @@ func (s *OrderService) CancelOrder(userID, id int64, isAdmin bool) error {
 	if !isAdmin {
 		db = db.Where("user_id = ?", userID)
 	}
-	// 只能取消待支付(0)的订单 (修正: 原代码有的10可能是typo，现只允许取消未支付订单)
+
 	return db.Where("id = ? AND status = ?", id, 0).Update("status", 40).Error // 40:已取消
 }
 
