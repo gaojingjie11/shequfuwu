@@ -4,8 +4,7 @@
     
     <div class="container">
       <div class="page-header">
-        <el-button @click="$router.back()" icon="el-icon-arrow-left">返回</el-button>
-        <span class="title">订单详情</span>
+        <el-page-header @back="$router.back()" content="订单详情" title="返回" />
       </div>
 
       <div class="content" v-loading="loading">
@@ -13,7 +12,12 @@
           <!-- Status Card -->
           <el-card class="status-card">
              <div class="status-header">
-               <span class="status-text">{{ getStatusText(order.status) }}</span>
+               <div class="status-left">
+                 <span class="status-text">{{ getStatusText(order.status) }}</span>
+                 <span class="store-name" v-if="order.store"> 
+                    <el-tag size="small" type="info">服务门店</el-tag> {{ order.store.name }}
+                 </span>
+               </div>
                <span class="order-total">总金额: ¥{{ order.total_amount }}</span>
              </div>
              <div class="status-actions">
@@ -27,20 +31,24 @@
           <el-card class="section-card">
             <template #header>
               <div class="card-header">
-                <span>收货信息</span>
+                <span>收货/用户信息</span>
               </div>
             </template>
-            <div class="info-row">
-              <span class="label">收货人：</span>
-              <span class="value">{{ order.name }}</span>
+            <!-- Data from SysUser association -->
+            <div class="info-row" v-if="order.sys_user">
+              <span class="label">用户名：</span>
+              <span class="value">{{ order.sys_user.username }}</span>
             </div>
-            <div class="info-row">
+            <div class="info-row" v-if="order.sys_user">
+               <span class="label">真实姓名：</span>
+               <span class="value">{{ order.sys_user.real_name || '未设置' }}</span>
+            </div>
+            <div class="info-row" v-if="order.sys_user">
               <span class="label">手机号：</span>
-              <span class="value">{{ order.mobile }}</span>
+              <span class="value">{{ order.sys_user.mobile }}</span>
             </div>
-            <div class="info-row">
-              <span class="label">地址：</span>
-              <span class="value">{{ order.address }}</span>
+            <div class="info-row" v-else>
+               <span class="value text-gray">用户信息获取失败</span>
             </div>
           </el-card>
 

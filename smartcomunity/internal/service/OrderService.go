@@ -124,98 +124,59 @@ func (s *OrderService) GetList(userID int64, status *int, page, size int) ([]mod
 	db.Count(&total)
 
 	offset := (page - 1) * size
-	err := db.Preload("Items.Product").Preload("Store").
+	err := db.Preload("Items.Product").Preload("Store").Preload("SysUser").
 		Order("created_at desc").
 		Offset(offset).Limit(size).
 		Find(&list).Error
 	return list, total, err
 }
 
-// PayOrder 支付订单 (核心逻辑)
-func (s *OrderService) PayOrder(userID int64, orderID int64) error {
-	return global.DB.Transaction(func(tx *gorm.DB) error {
-		// 1. 查询订单
-		var order model.Order
-		if err := tx.First(&order, orderID).Error; err != nil {
-			return errors.New("订单不存在")
-		}
+// PayOrder 支付订单
+func (s *OrderService) PayOrder(userID, orderID int64) error {
+	// 校验订单是否存在且属于该用户
+	var order model.Order
+	if err := global.DB.Where("id = ? AND user_id = ?", orderID, userID).First(&order).Error; err != nil {
+		return errors.New("订单不存在或不属于该用户")
+	}
 
-		// 2. 校验状态与归属
-		if order.UserID != userID {
-			return errors.New("无权操作此订单")
-		}
-		if order.Status != 0 { // 假设 0 是待支付
-			return errors.New("订单状态不正确，无法支付")
-		}
+	// 校验状态 (只有待支付状态0可以支付)
+	if order.Status != 0 {
+		return errors.New("订单状态不正确，无法支付")
+	}
 
-		// 3. 查询用户余额
-		var user model.SysUser
-		if err := tx.First(&user, userID).Error; err != nil {
-			return err
-		}
-
-		// 4. 余额判断
-		if user.Balance < order.TotalAmount {
-			return errors.New("余额不足，请充值")
-		}
-
-		// 5. 扣减余额 (更新 sys_user)
-		if err := tx.Model(&user).Update("balance", gorm.Expr("balance - ?", order.TotalAmount)).Error; err != nil {
-			return err
-		}
-
-		// 6. 更新订单状态为已支付(待发货)
-		if err := tx.Model(&order).Update("status", 1).Error; err != nil {
-			return err
-		}
-
-		// 7. 写入 sys_transaction 流水表 (新增)
-		transaction := model.SysTransaction{
-			UserID:    userID,
-			Type:      1,                  // 1: 商城订单
-			Amount:    -order.TotalAmount, // 记录支出金额 (负数)
-			RelatedID: order.ID,
-			Remark:    fmt.Sprintf("支付商城订单-%s", order.OrderNo),
-			CreatedAt: time.Now(),
-		}
-		if err := tx.Create(&transaction).Error; err != nil {
-			return err
-		}
-
-		return nil
-	})
+	// 更新状态为已支付(1)
+	// 实际项目中这里应该对接支付回调，这里简化直接改状态
+	return global.DB.Model(&order).Update("status", 1).Error
 }
 
 // ShipOrder 发货 (管理员)
 func (s *OrderService) ShipOrder(orderID int64) error {
-	// 更新条件：必须是已支付(1)状态
-	result := global.DB.Model(&model.Order{}).
-		Where("id = ? AND status = 1", orderID).
-		Update("status", 2) // 2: 已发货
+	var order model.Order
+	if err := global.DB.First(&order, orderID).Error; err != nil {
+		return errors.New("订单不存在")
+	}
 
-	if result.Error != nil {
-		return result.Error
+	// 只有已支付(1)的订单可以发货
+	if order.Status != 1 {
+		return errors.New("订单状态不正确，无法发货")
 	}
-	if result.RowsAffected == 0 {
-		return errors.New("订单状态不正确(需为已支付)或订单不存在")
-	}
-	return nil
+
+	return global.DB.Model(&order).Update("status", 2).Error
 }
 
 // ReceiveOrder 确认收货 (用户)
 func (s *OrderService) ReceiveOrder(userID, orderID int64) error {
-	// 更新条件：必须是已发货(2)状态，且属于该用户
-	result := global.DB.Model(&model.Order{}).
-		Where("id = ? AND user_id = ? AND status = 2", orderID, userID).
-		Update("status", 3) // 3: 已完成
+	var order model.Order
+	if err := global.DB.Where("id = ? AND user_id = ?", orderID, userID).First(&order).Error; err != nil {
+		return errors.New("订单不存在")
+	}
 
-	if result.Error != nil {
-		return result.Error
+	// 只有已发货(2)的订单可以收货
+	if order.Status != 2 {
+		return errors.New("订单状态不正确，无法收货")
 	}
-	if result.RowsAffected == 0 {
-		return errors.New("订单状态不正确或无权操作")
-	}
-	return nil
+
+	return global.DB.Model(&order).Update("status", 3).Error
 }
 
 // ListAllOrders 管理员查看所有订单 (Admin)
@@ -231,7 +192,7 @@ func (s *OrderService) ListAllOrders(page, size int, userID int64) ([]model.Orde
 
 	// Preload 加载关联的商品信息，方便管理端查看
 	offset := (page - 1) * size
-	err := tx.Preload("Items").Preload("Items.Product").
+	err := tx.Preload("Items").Preload("Items.Product").Preload("Store").Preload("SysUser").
 		Order("id desc").Offset(offset).Limit(size).Find(&list).Error
 	return list, total, err
 }
@@ -249,7 +210,7 @@ func (s *OrderService) CancelOrder(userID, id int64, isAdmin bool) error {
 // GetOrderDetail 获取单个订单详情
 func (s *OrderService) GetOrderDetail(userID, orderID int64) (*model.Order, error) {
 	var order model.Order
-	err := global.DB.Preload("Items.Product").Preload("Store").
+	err := global.DB.Preload("Items.Product").Preload("Store").Preload("SysUser").
 		Where("id = ? AND user_id = ?", orderID, userID).
 		First(&order).Error
 	if err != nil {

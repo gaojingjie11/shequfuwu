@@ -17,6 +17,9 @@ type Order struct {
 
 	// 关联门店
 	Store Store `gorm:"foreignKey:StoreID" json:"store"`
+
+	// 关联用户
+	SysUser SysUser `gorm:"foreignKey:UserID" json:"sys_user"`
 }
 
 func (Order) TableName() string {
