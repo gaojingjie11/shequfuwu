@@ -181,3 +181,22 @@ func (h *OrderHandler) ListAll(c *gin.Context) {
 		"total": total,
 	})
 }
+
+// Detail 获取订单详情接口
+func (h *OrderHandler) Detail(c *gin.Context) {
+	userID, _ := c.Get("userID")
+	orderID, _ := strconv.ParseInt(c.Query("id"), 10, 64) // Get id from query params
+
+	if orderID == 0 {
+		response.Fail(c, "参数错误")
+		return
+	}
+
+	order, err := h.Service.GetOrderDetail(userID.(int64), orderID)
+	if err != nil {
+		response.Fail(c, "获取详情失败或订单不存在")
+		return
+	}
+
+	response.Success(c, order)
+}

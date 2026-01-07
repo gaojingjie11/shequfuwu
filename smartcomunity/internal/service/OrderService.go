@@ -245,3 +245,15 @@ func (s *OrderService) CancelOrder(userID, id int64, isAdmin bool) error {
 	// 只能取消待支付(0)的订单 (修正: 原代码有的10可能是typo，现只允许取消未支付订单)
 	return db.Where("id = ? AND status = ?", id, 0).Update("status", 40).Error // 40:已取消
 }
+
+// GetOrderDetail 获取单个订单详情
+func (s *OrderService) GetOrderDetail(userID, orderID int64) (*model.Order, error) {
+	var order model.Order
+	err := global.DB.Preload("Items.Product").Preload("Store").
+		Where("id = ? AND user_id = ?", orderID, userID).
+		First(&order).Error
+	if err != nil {
+		return nil, err
+	}
+	return &order, nil
+}

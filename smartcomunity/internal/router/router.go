@@ -66,6 +66,7 @@ func InitRouter(r *gin.Engine) {
 		// 订单相关
 		private.POST("/order/create", orderHandler.Create)     // 下单
 		private.GET("/order/list", orderHandler.List)          // 订单列表
+		private.GET("/order/detail", orderHandler.Detail)      // 订单详情 (新增)
 		private.POST("/order/pay", orderHandler.Pay)           // 支付订单
 		private.GET("/order/admin/list", orderHandler.ListAll) // 管理员看所有订单
 		private.POST("/order/ship", orderHandler.Ship)         // 管理员发货
