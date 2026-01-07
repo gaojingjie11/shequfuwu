@@ -1,0 +1,287 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "智能社区 API",
+    "version": "1.0.0",
+    "description": "Smart Community API Documentation"
+  },
+  "servers": [
+    {
+      "url": "http://43.138.85.114:81/api",
+      "description": "Production Server"
+    },
+    {
+      "url": "http://localhost:8081/api",
+      "description": "Local Development Server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "paths": {
+    "/v1/register": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "用户注册",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": { "type": "string", "example": "testuser" },
+                  "password": { "type": "string", "example": "password123" },
+                  "mobile": { "type": "string", "example": "13800138000" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Success" }
+        }
+      }
+    },
+    "/v1/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "用户登录",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": { "type": "string", "example": "testuser" },
+                  "password": { "type": "string", "example": "password123" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Success" }
+        }
+      }
+    },
+    "/user/info": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "获取当前用户信息",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Success" }
+        }
+      }
+    },
+    "/v1/products": {
+      "get": {
+        "tags": ["Mall"],
+        "summary": "获取商品列表",
+        "parameters": [
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "size", "in": "query", "schema": { "type": "integer", "default": 10 } },
+          { "name": "category_id", "in": "query", "schema": { "type": "integer" } },
+          { "name": "name", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Success" }
+        }
+      }
+    },
+    "/v1/categories": {
+      "get": {
+        "tags": ["Mall"],
+        "summary": "获取商品分类",
+        "responses": {
+          "200": { "description": "Success" }
+        }
+      }
+    },
+    "/v1/product/{id}": {
+      "get": {
+        "tags": ["Mall"],
+        "summary": "获取商品详情",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Success" }
+        }
+      }
+    },
+    "/v1/comments": {
+      "get": {
+        "tags": ["Comment"],
+        "summary": "获取商品评论",
+        "parameters": [
+          { "name": "product_id", "in": "query", "required": true, "schema": { "type": "integer" } },
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "size", "in": "query", "schema": { "type": "integer", "default": 10 } }
+        ],
+        "responses": {
+          "200": { "description": "Success" }
+        }
+      }
+    },
+    "/user/comment/create": {
+      "post": {
+        "tags": ["Comment"],
+        "summary": "发表评论",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "product_id": { "type": "integer", "example": 1 },
+                  "content": { "type": "string", "example": "东西不错！" },
+                  "rating": { "type": "integer", "example": 5 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Success" }
+        }
+      }
+    },
+    "/user/cart": {
+      "post": {
+        "tags": ["Order"],
+        "summary": "创建订单 (加入购物车)",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "product_id": { "type": "integer", "example": 1 },
+                  "quantity": { "type": "integer", "example": 1 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Success" }
+        }
+      },
+      "get": {
+        "tags": ["Order"],
+        "summary": "获取购物车/订单列表",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Success" }
+        }
+      }
+    },
+    "/user/cart/pay": {
+      "post": {
+        "tags": ["Order"],
+        "summary": "支付订单",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "order_id": { "type": "integer", "example": 123 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Success" }
+        }
+      }
+    },
+    "/user/upload": {
+      "post": {
+        "tags": ["Admin"],
+        "summary": "上传图片",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": { "type": "string", "format": "binary" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Success" }
+        }
+      }
+    },
+    "/v1/dashboard/stats": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "获取数据大屏统计",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Success" }
+        }
+      }
+    },
+    "/user/orders/all": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "搜索订单 (管理员)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "size", "in": "query", "schema": { "type": "integer", "default": 10 } },
+          { "name": "user_id", "in": "query", "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Success" }
+        }
+      }
+    },
+    "/parking/admin/create": {
+      "post": {
+        "tags": ["Admin"],
+        "summary": "新增车位",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "number": { "type": "string", "example": "A-888" },
+                  "status": { "type": "integer", "example": 0, "description": "0:空闲, 1:占用" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Success" }
+        }
+      }
+    }
+  }
+}
