@@ -10,6 +10,7 @@
           <router-link to="/home" class="nav-link">首页</router-link>
           <router-link to="/mall" class="nav-link">商城</router-link>
           <router-link to="/service" class="nav-link">社区服务</router-link>
+          <router-link to="/chat" class="nav-link" v-if="userStore.isLoggedIn">AI助手</router-link>
           <router-link to="/order" class="nav-link" v-if="userStore.isLoggedIn">我的订单</router-link>
         </div>
         

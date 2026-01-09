@@ -180,6 +180,12 @@ const routes = [
         name: 'AdminPropertyFeeList',
         component: () => import('@/views/admin/PropertyFeeList.vue'),
         meta: { requiresAuth: true, requiresAdmin: true, roles: ['admin', 'property'] }
+    },
+    {
+        path: '/chat',
+        name: 'Chat',
+        component: () => import('@/views/chat/Index.vue'),
+        meta: { requiresAuth: true }
     }
 ]
 

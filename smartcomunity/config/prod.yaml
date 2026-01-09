@@ -15,3 +15,8 @@ minio:
   secret_key: "minioadmin123"
   bucket: "community"
   use_ssl: false
+
+ai:
+  api_key: "sk-3afaa00674244df6b483dcf36272997f"
+  base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"
+  model: "qwen-plus"

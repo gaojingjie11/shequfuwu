@@ -157,6 +157,10 @@ func InitRouter(r *gin.Engine) {
 		// --- 【新增】商品评论 (Auth) ---
 		commentHandler := controller.CommentHandler{}
 		private.POST("/comment/create", commentHandler.Create)
+
+		// --- 【新增】AI 智能助手 ---
+		aiHandler := controller.AIHandler{}
+		private.POST("/chat/send", aiHandler.Send)
 	}
 
 	public := r.Group("/api/v1")

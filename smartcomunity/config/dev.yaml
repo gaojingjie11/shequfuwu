@@ -17,3 +17,9 @@ minio:
   secret_key: "minioadmin123"        # 你的 MinIO 密码
   bucket: "community"           # 存储桶名称
   use_ssl: false                # 本地通常是 false，线上如果是 https 则为 true
+
+ai:
+  api_key: "sk-3afaa00674244df6b483dcf36272997f"
+  # 华北2 (北京)
+  base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"
+  model: "qwen-plus"
