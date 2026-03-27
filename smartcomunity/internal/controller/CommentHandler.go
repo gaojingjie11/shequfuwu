@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"log"
 	"smartcommunity/internal/service"
 	"smartcommunity/pkg/response"
 	"strconv"
@@ -13,7 +14,17 @@ type CommentHandler struct {
 }
 
 func (h *CommentHandler) Create(c *gin.Context) {
-	userID, _ := c.Get("userID")
+	userID, ok := c.Get("userID")
+	if !ok {
+		response.FailWithCode(c, 401, "请先登录")
+		return
+	}
+	uid, ok := userID.(int64)
+	if !ok {
+		response.FailWithCode(c, 401, "登录状态无效")
+		return
+	}
+
 	var req struct {
 		ProductID int64  `json:"product_id"`
 		Content   string `json:"content"`
@@ -24,7 +35,8 @@ func (h *CommentHandler) Create(c *gin.Context) {
 		return
 	}
 
-	if err := h.Service.CreateComment(userID.(int64), req.ProductID, req.Content, req.Rating); err != nil {
+	if err := h.Service.CreateComment(uid, req.ProductID, req.Content, req.Rating); err != nil {
+		log.Printf("create comment failed: user_id=%d product_id=%d rating=%d err=%v", uid, req.ProductID, req.Rating, err)
 		response.Fail(c, "评论失败")
 		return
 	}

@@ -17,8 +17,6 @@ func (s *ProductService) GetList(page, size int, name string, minPrice, maxPrice
 	var total int64
 
 	tx := global.DB.Model(&model.Product{})
-
-	// Build WHERE conditions
 	if name != "" {
 		tx = tx.Where("name LIKE ?", "%"+name+"%")
 	}
@@ -31,10 +29,9 @@ func (s *ProductService) GetList(page, size int, name string, minPrice, maxPrice
 	if categoryID > 0 {
 		tx = tx.Where("category_id = ?", categoryID)
 	}
-
-	// Simplifed isPromotion filter: check column directly
 	if isPromotion {
-		tx = tx.Where("is_promotion = 1")
+		// Promotion is defined by price relation, not stale stored flag.
+		tx = tx.Where("original_price > price")
 	}
 
 	switch sort {
@@ -51,9 +48,13 @@ func (s *ProductService) GetList(page, size int, name string, minPrice, maxPrice
 	tx.Count(&total)
 
 	offset := (page - 1) * size
-	err := tx.Offset(offset).Limit(size).Find(&list).Error
-
-	return list, total, err
+	if err := tx.Offset(offset).Limit(size).Find(&list).Error; err != nil {
+		return nil, 0, err
+	}
+	for i := range list {
+		list[i].IsPromotion = calcIsPromotion(list[i].OriginalPrice, list[i].Price)
+	}
+	return list, total, nil
 }
 
 func (s *ProductService) GetDetail(id int64) (*model.Product, error) {
@@ -61,6 +62,7 @@ func (s *ProductService) GetDetail(id int64) (*model.Product, error) {
 	if err := global.DB.First(&product, id).Error; err != nil {
 		return nil, err
 	}
+	product.IsPromotion = calcIsPromotion(product.OriginalPrice, product.Price)
 	return &product, nil
 }
 
@@ -74,15 +76,13 @@ func (s *ProductService) GetSalesRank() ([]model.Product, error) {
 }
 
 func (s *ProductService) Create(product *model.Product) error {
-	// Validate required fields
 	if product.Name == "" {
-		return errors.New("商品名称不能为空")
+		return errors.New("product name is required")
 	}
 	if product.Price <= 0 {
-		return errors.New("商品价格必须大于0")
+		return errors.New("product price must be greater than 0")
 	}
 
-	// Auto-fill CategoryName for compatibility
 	if product.CategoryID > 0 {
 		var cat model.ProductCategory
 		if err := global.DB.First(&cat, product.CategoryID).Error; err == nil {
@@ -90,43 +90,27 @@ func (s *ProductService) Create(product *model.Product) error {
 		}
 	}
 
-	// Sync IsPromotion logic
-	if product.OriginalPrice > product.Price {
-		product.IsPromotion = 1
-	} else {
-		product.IsPromotion = 0
-	}
+	product.IsPromotion = calcIsPromotion(product.OriginalPrice, product.Price)
 
 	return global.DB.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(product).Error; err != nil {
-			return fmt.Errorf("创建商品失败: %w", err)
+			return fmt.Errorf("create product failed: %w", err)
 		}
-
-		// Force ensure IsPromotion is saved correctly (fixing potential zero-value omission issue)
-		if err := tx.Model(&model.Product{}).Where("id = ?", product.ID).Update("is_promotion", product.IsPromotion).Error; err != nil {
-			return err
-		}
-
-		// Maintain pms_promotion table for record keeping
-		if product.IsPromotion == 1 {
-			promotion := model.Promotion{
-				Title:     "特惠促销",
-				Type:      2,
-				StartDate: time.Now(),
-				EndDate:   time.Now().AddDate(1, 0, 0),
-				Status:    1,
-				ProductID: product.ID,
-			}
-			if err := tx.Create(&promotion).Error; err != nil {
-				return fmt.Errorf("创建促销失败: %w", err)
-			}
-		}
-		return nil
+		return s.syncPromotionRecord(tx, product.ID, product.IsPromotion)
 	})
 }
 
 func (s *ProductService) Update(product *model.Product) error {
-	// Auto-fill CategoryName based on ID
+	if product.ID == 0 {
+		return errors.New("product id is required")
+	}
+	if product.Name == "" {
+		return errors.New("product name is required")
+	}
+	if product.Price <= 0 {
+		return errors.New("product price must be greater than 0")
+	}
+
 	if product.CategoryID > 0 {
 		var cat model.ProductCategory
 		if err := global.DB.First(&cat, product.CategoryID).Error; err == nil {
@@ -134,55 +118,26 @@ func (s *ProductService) Update(product *model.Product) error {
 		}
 	}
 
-	// Sync IsPromotion logic
-	// If product is off-shelf (Status=0), force IsPromotion to 0
-	if product.Status == 0 {
-		product.IsPromotion = 0
-	} else if product.OriginalPrice > product.Price {
-		product.IsPromotion = 1
-	} else {
-		product.IsPromotion = 0
-	}
+	product.IsPromotion = calcIsPromotion(product.OriginalPrice, product.Price)
 
 	return global.DB.Transaction(func(tx *gorm.DB) error {
-		// Update product, including is_promotion
-		if err := tx.Model(&model.Product{}).Where("id = ?", product.ID).Updates(product).Error; err != nil {
+		// Use map to ensure zero values (e.g. status=0) are persisted.
+		updates := map[string]interface{}{
+			"name":           product.Name,
+			"price":          product.Price,
+			"original_price": product.OriginalPrice,
+			"stock":          product.Stock,
+			"category_id":    product.CategoryID,
+			"category_name":  product.CategoryName,
+			"description":    product.Description,
+			"image_url":      product.ImageURL,
+			"status":         product.Status,
+			"is_promotion":   product.IsPromotion,
+		}
+		if err := tx.Model(&model.Product{}).Where("id = ?", product.ID).Updates(updates).Error; err != nil {
 			return err
 		}
-
-		// Force update IsPromotion strictly
-		if err := tx.Model(&model.Product{}).Where("id = ?", product.ID).Update("is_promotion", product.IsPromotion).Error; err != nil {
-			return err
-		}
-
-		// Promotion Table Sync
-		var count int64
-		// Check based on ProductID
-		tx.Model(&model.Promotion{}).Where("product_id = ?", product.ID).Count(&count)
-
-		if product.IsPromotion == 1 {
-			if count == 0 {
-				promotion := model.Promotion{
-					Title:     "特惠促销",
-					Type:      2,
-					StartDate: time.Now(),
-					EndDate:   time.Now().AddDate(1, 0, 0),
-					Status:    1,
-					ProductID: product.ID,
-				}
-				if err := tx.Create(&promotion).Error; err != nil {
-					return err
-				}
-			}
-		} else {
-			// If not promotion OR off-shelf, remove existing promotion
-			if count > 0 {
-				if err := tx.Where("product_id = ?", product.ID).Delete(&model.Promotion{}).Error; err != nil {
-					return err
-				}
-			}
-		}
-		return nil
+		return s.syncPromotionRecord(tx, product.ID, product.IsPromotion)
 	})
 }
 
@@ -198,4 +153,35 @@ func (s *ProductService) GetCategories() ([]model.ProductCategory, error) {
 	var list []model.ProductCategory
 	err := global.DB.Find(&list).Error
 	return list, err
+}
+
+func calcIsPromotion(originalPrice, price float64) int {
+	if originalPrice > price {
+		return 1
+	}
+	return 0
+}
+
+func (s *ProductService) syncPromotionRecord(tx *gorm.DB, productID int64, isPromotion int) error {
+	if isPromotion == 1 {
+		var count int64
+		if err := tx.Model(&model.Promotion{}).Where("product_id = ?", productID).Count(&count).Error; err != nil {
+			return err
+		}
+		if count == 0 {
+			promotion := model.Promotion{
+				Title:     "special promotion",
+				Type:      2,
+				StartDate: time.Now(),
+				EndDate:   time.Now().AddDate(1, 0, 0),
+				Status:    1,
+				ProductID: productID,
+			}
+			if err := tx.Create(&promotion).Error; err != nil {
+				return fmt.Errorf("create promotion failed: %w", err)
+			}
+		}
+		return nil
+	}
+	return tx.Where("product_id = ?", productID).Delete(&model.Promotion{}).Error
 }

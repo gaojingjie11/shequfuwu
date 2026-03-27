@@ -30,8 +30,8 @@ func (h *ProductHandler) List(c *gin.Context) {
 
 	// Added category_id filter
 	categoryID, _ := strconv.ParseInt(c.Query("category_id"), 10, 64)
-	// Added is_promotion filter
-	isPromotion := c.Query("is_promotion") == "true"
+	// Support true/1 for is_promotion query parameter.
+	isPromotion := c.Query("is_promotion") == "true" || c.Query("is_promotion") == "1"
 
 	list, total, err := h.Service.GetList(page, size, name, minPrice, maxPrice, sort, categoryID, isPromotion)
 	if err != nil {

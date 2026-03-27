@@ -47,6 +47,7 @@ func main() {
 		&model.Parking{},
 		&model.PropertyFee{},
 		&model.Favorite{},
+		&model.ProductComment{},
 		&model.SysTransaction{},
 		&model.GreenPointRecord{},
 		&model.AIReport{},

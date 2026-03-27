@@ -77,13 +77,14 @@ export function getPropertyFeeList(params) {
   })
 }
 
-export function payPropertyFee(feeId) {
+export function payPropertyFee(feeId, password = '') {
   return request({
     url: '/finance/pay',
     method: 'post',
     data: {
       business_id: feeId,
-      pay_type: 2
+      pay_type: 2,
+      password
     }
   })
 }
